@@ -54,19 +54,24 @@ public class VoucherRepository {
     }
 
     public boolean checkIfVoucherIsAssignedToUser(String voucher, int id) {
-        String query1 = "SELECT username FROM users WHERE id=" + id;
+        String query1 = "SELECT username FROM users WHERE id=?";
 
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet rs = statement.executeQuery(query1)) {
+             PreparedStatement statement1 = connection.prepareStatement(query1)) {
+            statement1.setInt(1, id);
+            ResultSet rs = statement1.executeQuery();
+
             if (rs.next()) {
                 String username = rs.getString(1);
-                String query2 = "SELECT id FROM voucher WHERE code=? AND code LIKE '%" + username + "%'";
-                PreparedStatement preparedStatement = connection.prepareStatement(query2);
-                preparedStatement.setString(1, voucher);
-                ResultSet set = preparedStatement.executeQuery();
-                if (set.next()) {
-                    return true;
+
+                String query2 = "SELECT id FROM voucher WHERE code=? AND code LIKE ?";
+                try (PreparedStatement statement2 = connection.prepareStatement(query2)) {
+                    statement2.setString(1, voucher);
+                    statement2.setString(2, "%" + username + "%");
+                    ResultSet set = statement2.executeQuery();
+                    if (set.next()) {
+                        return true;
+                    }
                 }
                 return false;
             }
