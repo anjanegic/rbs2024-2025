@@ -37,12 +37,14 @@ public class CommentRepository {
 
     public List<Comment> getAll(String bookId) {
         List<Comment> commentList = new ArrayList<>();
-        String query = "SELECT bookId, userId, comment FROM comments WHERE bookId = " + bookId;
+        String query = "SELECT bookId, userId, comment FROM comments WHERE bookId = ?";
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet rs = statement.executeQuery(query)) {
-            while (rs.next()) {
-                commentList.add(new Comment(rs.getInt(1), rs.getInt(2), rs.getString(3)));
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, bookId);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    commentList.add(new Comment(rs.getInt(1), rs.getInt(2), rs.getString(3)));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();

@@ -10,13 +10,13 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-@Component
-@Order(1)
+// @Component
+// @Order(1)
 public class CorsFilter implements Filter {
 
     // This is to be replaced with a list of domains allowed to access the server
     //You can include more than one origin here
-    private final List<String> allowedOrigins = Arrays.asList("http://localhost:3000");
+    private final List<String> allowedOrigins = Arrays.asList("http://localhost:3000", "http://localhost:8081");
 
     public void destroy() {
 
@@ -40,11 +40,17 @@ public class CorsFilter implements Filter {
             response.setHeader("Access-Control-Allow-Credentials", "true");
 
             // Access-Control-Allow-Methods
-            response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE");
+            response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
 
             // Access-Control-Allow-Headers
             response.setHeader("Access-Control-Allow-Headers",
                     "Origin, X-Requested-With, Content-Type, Accept, " + "X-CSRF-TOKEN");
+
+            // Handle preflight requests
+            if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                response.setStatus(HttpServletResponse.SC_OK);
+                return;
+            }
         }
 
         chain.doFilter(req, res);
