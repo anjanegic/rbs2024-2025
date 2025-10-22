@@ -3,9 +3,9 @@ package com.zuehlke.securesoftwaredevelopment.repository;
 import com.zuehlke.securesoftwaredevelopment.config.AuditLogger;
 import com.zuehlke.securesoftwaredevelopment.config.Entity;
 import com.zuehlke.securesoftwaredevelopment.domain.Person;
+import org.springframework.stereotype.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -15,9 +15,8 @@ import java.util.List;
 @Repository
 public class PersonRepository {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PersonRepository.class);
     private static final AuditLogger auditLogger = AuditLogger.getAuditLogger(PersonRepository.class);
-
+    private static final Logger LOG = LoggerFactory.getLogger(PersonRepository.class);
     private DataSource dataSource;
 
     public PersonRepository(DataSource dataSource) {
@@ -74,6 +73,7 @@ public class PersonRepository {
              Statement statement = connection.createStatement();
         ) {
             statement.executeUpdate(query);
+            auditLogger.audit("Deleted person with ID: " + personId);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -99,6 +99,12 @@ public class PersonRepository {
             statement.setString(1, firstName);
             statement.setString(2, email);
             statement.executeUpdate();
+            auditLogger.auditChange(new Entity(
+                    "persons.update",
+                    personFromDb.getId(),
+                    personFromDb.getFirstName() + " " + personFromDb.getEmail(),
+                    firstName +" "+email));
+            LOG.info("Person updated successfully");
         } catch (SQLException e) {
             e.printStackTrace();
         }

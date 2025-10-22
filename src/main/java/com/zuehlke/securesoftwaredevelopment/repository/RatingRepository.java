@@ -24,14 +24,16 @@ public class RatingRepository {
     }
 
     public void createOrUpdate(Rating rating) {
-        String query = "SELECT bookId, userId, rating FROM ratings WHERE bookId = " + rating.getBookId() + " AND userID = " + rating.getUserId();
+        String query = "SELECT bookId, userId, rating FROM ratings WHERE bookId = ? AND userID = ?";
         String query2 = "update ratings SET rating = ? WHERE bookId = ? AND userId = ?";
         String query3 = "insert into ratings(bookId, userId, rating) values (?, ?, ?)";
 
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet rs = statement.executeQuery(query)
+             PreparedStatement checkStatement = connection.prepareStatement(query);
         ) {
+            checkStatement.setInt(1, rating.getBookId());
+            checkStatement.setInt(2, rating.getUserId());
+            ResultSet rs = checkStatement.executeQuery();
             if (rs.next()) {
                 PreparedStatement preparedStatement = connection.prepareStatement(query2);
                 preparedStatement.setInt(1, rating.getRating());
@@ -52,12 +54,14 @@ public class RatingRepository {
 
     public List<Rating> getAll(String bookId) {
         List<Rating> ratingList = new ArrayList<>();
-        String query = "SELECT bookId, userId, rating FROM ratings WHERE bookId = " + bookId;
+        String query = "SELECT bookId, userId, rating FROM ratings WHERE bookId = ?";
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet rs = statement.executeQuery(query)) {
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, bookId);
+            ResultSet rs = statement.executeQuery();
             while (rs.next()) {
-                ratingList.add(new Rating(rs.getInt(1), rs.getInt(2), rs.getInt(3)));
+                Rating rating = new Rating(rs.getInt(1), rs.getInt(2), rs.getInt(3));
+                ratingList.add(rating);
             }
         } catch (SQLException e) {
             e.printStackTrace();

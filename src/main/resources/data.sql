@@ -13,7 +13,8 @@ values (1, 'bruce', 'wayne', 'notBatman@gmail.com'),
 insert into hashedUsers(id, username, passwordHash, salt)
 values (1, 'bruce', 'qw8Uxa2fXimKruS9wYEm4qm3ZaIGw/hJNvOG3PemhoA=', 'MEI4PU5hcHhaRHZz'),
        (2, 'peter', 'qPWryBEWiWdHsC+67dmO+y5ugGrMVI2w4MSz0+CpDm4=', 'MnY1am14c2d1ZlBf'),
-       (3, 'tom', 'FLmYMYmwSRxcy0n2uwysy39ax0TRWvKHswSCPMo+PiI=', 'OChoOitAKWE0TWlD');
+       (3, 'tom', 'FLmYMYmwSRxcy0n2uwysy39ax0TRWvKHswSCPMo+PiI=', 'OChoOitAKWE0TWlD'),
+       (4, 'book', 'qw8Uxa2fXimKruS9wYEm4qm3ZaIGw/hJNvOG3PemhoA=', 'MEI4PU5hcHhaRHZz');
 
 insert into book(id, name, author, description, price)
 values (1, 'Le Petit Prince',
@@ -63,8 +64,32 @@ values (1, 1, 'Good read.');
 
 insert into roles(id, name)
 values (1, 'ADMIN'),
-       (2, 'MANAGER');
+       (2, 'MANAGER'),
+       (3, 'BUYER');
+
+insert into permissions(id, name)
+values (1, 'ADD_COMMENT'),
+       (2, 'VIEW_BOOK_LIST'),
+       (3, 'CREATE_BOOK'),
+       (4, 'VIEW_PERSONS_LIST'),
+       (5, 'VIEW_PERSON'),
+       (6, 'UPDATE_PERSON'),
+       (7, 'VIEW_MY_PROFILE'),
+       (8, 'RATE_BOOK'),
+       (9, 'BUY_BOOK'),
+       (10, 'NEW_VOUCHER');
 
 insert into user_to_roles(userId, roleId)
-values (4, 1),
-       (3, 2);
+values (4, 1),  -- book -> ADMIN
+       (3, 2),  -- tom -> MANAGER
+       (1, 3),  -- bruce -> BUYER
+       (2, 3);  -- peter -> BUYER
+
+insert into role_to_permissions(roleId, permissionId)
+values
+-- ADMIN
+(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10),
+-- MANAGER
+(2, 1), (2, 2), (2, 3), (2, 4), (2, 6), (2, 7), (2, 9), (2, 10),
+-- BUYER
+(3, 1), (3, 2), (3, 6), (3, 7), (3, 8), (3, 9);

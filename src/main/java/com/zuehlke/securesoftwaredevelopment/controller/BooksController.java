@@ -3,8 +3,7 @@ package com.zuehlke.securesoftwaredevelopment.controller;
 import com.zuehlke.securesoftwaredevelopment.config.AuditLogger;
 import com.zuehlke.securesoftwaredevelopment.domain.*;
 import com.zuehlke.securesoftwaredevelopment.repository.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -20,7 +19,6 @@ import java.util.stream.Collectors;
 @Controller
 public class BooksController {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BooksController.class);
     private static final AuditLogger auditLogger = AuditLogger.getAuditLogger(BooksController.class);
 
     private BookRepository bookRepository;
@@ -40,12 +38,14 @@ public class BooksController {
     }
 
     @GetMapping("/")
+    @PreAuthorize("hasAuthority('VIEW_BOOK_LIST')")
     public String showSearch(Model model) {
         model.addAttribute("books", bookRepository.getAll());
         return "books";
     }
 
     @GetMapping("/create-form")
+    @PreAuthorize("hasAuthority('CREATE_BOOK')")
     public String CreateForm(Model model) {
         model.addAttribute("tags", tagRepository.getAll());
         return "create-form";
@@ -53,11 +53,13 @@ public class BooksController {
 
     @GetMapping(value = "/api/books/search", produces = "application/json")
     @ResponseBody
+    @PreAuthorize("hasAuthority('VIEW_BOOK_LIST')")
     public List<Book> search(@RequestParam("query") String query) throws SQLException {
         return bookRepository.search(query);
     }
 
     @GetMapping("/books")
+    @PreAuthorize("hasAuthority('VIEW_BOOK_LIST')")
     public String showBook(@RequestParam(name = "id", required = false) String id, Model model, Authentication authentication) {
         if (id == null) {
             model.addAttribute("books", bookRepository.getAll());
@@ -93,14 +95,17 @@ public class BooksController {
     }
 
     @PostMapping("/books")
+    @PreAuthorize("hasAuthority('CREATE_BOOK')")
     public String createBook(NewBook newBook) throws SQLException {
         List<Tag> tagList = this.tagRepository.getAll();
         List<Tag> tagsToInsert = newBook.getTags().stream().map(tagId -> tagList.stream().filter(tag -> tag.getId() == tagId).findFirst().get()).collect(Collectors.toList());
         Long id = bookRepository.create(newBook, tagsToInsert);
+        auditLogger.audit("Created new book: " + newBook.getName());
         return "redirect:/books?id=" + id;
     }
 
     @GetMapping("/buy-book/{id}")
+    @PreAuthorize("hasAuthority('BUY_BOOK')")
     public String showBuyBook(
             @PathVariable("id") int id,
             @RequestParam(required = false) boolean addressError,
@@ -121,11 +126,13 @@ public class BooksController {
     }
 
     @PostMapping("/buy-book/{id}")
+    @PreAuthorize("hasAuthority('BUY_BOOK')")
     public String buyBook(@PathVariable("id") int id, String address, String voucher) {
         String voucherUsed = "";
         boolean exist = voucherRepository.checkIfVoucherExist(voucher);
 
         if (address.length() < 10) {
+            auditLogger.audit("Book purchase failed - invalid address for book ID: " + id);
             return String.format("redirect:/buy-book/%s?addressError=true", id);
         }
 
@@ -137,7 +144,12 @@ public class BooksController {
                 if (voucherRepository.checkIfVoucherIsAssignedToUser(voucher, user.getId())) {
                     voucherRepository.deleteVoucher(voucher);
                     voucherUsed = "&voucherUsed=true";
+                    auditLogger.audit("Book purchased with voucher for book ID: " + id);
+                } else {
+                    auditLogger.audit("Book purchased without valid voucher for book ID: " + id);
                 }
+            } else {
+                auditLogger.audit("Book purchased without voucher for book ID: " + id);
             }
         }
 
