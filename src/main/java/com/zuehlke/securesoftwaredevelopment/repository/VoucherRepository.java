@@ -34,7 +34,7 @@ public class VoucherRepository {
             statement.setString(2, String.valueOf(value));
             statement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to create voucher: code={}, value={}, userId={}", code, value, userId, e);
         }
     }
 
@@ -48,7 +48,7 @@ public class VoucherRepository {
                 return true;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to check voucher existence: code={}", voucher, e);
         }
         return false;
     }
@@ -76,20 +76,27 @@ public class VoucherRepository {
                 return false;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to check if voucher is assigned to user: voucher={}, id={}", voucher, id, e);
+            //e.printStackTrace();
         }
         return false;
     }
 
     public void deleteVoucher(String voucher) {
+        LOG.warn("Deleting voucher: code={}", voucher);
         String query = "DELETE FROM voucher WHERE code=?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, voucher);
-            statement.executeUpdate();
+            int rowsAffected = statement.executeUpdate();
+            if (rowsAffected > 0) {
+                LOG.warn("Voucher deleted successfully: code={}", voucher);
+            } else {
+                LOG.warn("No voucher found to delete: code={}", voucher);
+            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to delete voucher: code={}", voucher, e);
         }
     }
 
@@ -103,7 +110,7 @@ public class VoucherRepository {
                 vouchers.add(new Voucher(rs.getInt(1), rs.getString(2), rs.getInt(3)));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to get all vouchers", e);
         }
         return vouchers;
     }

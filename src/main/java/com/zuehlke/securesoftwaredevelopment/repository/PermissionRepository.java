@@ -36,7 +36,8 @@ public class PermissionRepository {
                 permissions.add(new Permission(id, name));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to retrieve permissions for role with id: {}", roleId, e);
+            //e.printStackTrace();
         }
         return permissions;
     }

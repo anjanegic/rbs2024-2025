@@ -24,12 +24,7 @@ public class PermissionService {
         this.permissionRepository = permissionRepository;
     }
 
-    /**
-     * @param userId ID korisnika
-     * @return lista permisija koje korisnik ima
-     */
     public List<Permission> get(int userId) {
-
         List<Role> roles = roleRepository.findByUserId(userId);
         List<Permission> userPermissions = new ArrayList<>();
         for (Role role : roles) {
@@ -38,5 +33,4 @@ public class PermissionService {
         }
         return userPermissions;
     }
-
 }

@@ -31,7 +31,8 @@ public class HashedUserRepository {
                 return new HashedUser(username, passwordHash, salt, totpKey);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to find user with username: {}", username, e);
+            //e.printStackTrace();
         }
         return null;
     }

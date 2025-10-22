@@ -12,6 +12,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class DatabaseAuthenticationProvider implements AuthenticationProvider {
             List<GrantedAuthority> grantedAuthorities = getGrantedAuthorities(user);
 
             user.setAuthorities(grantedAuthorities);
-            
+
             auditLogger.audit("Login successful for username " + username);
             return new UsernamePasswordAuthenticationToken(user, password, grantedAuthorities);
         }

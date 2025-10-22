@@ -37,7 +37,8 @@ public class BookRepository {
                 bookList.add(book);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            LOG.warn("Error - couldn't get all books", e);
         }
         return bookList;
     }
@@ -55,6 +56,8 @@ public class BookRepository {
             while (rs.next()) {
                 bookList.add(createBookFromResultSet(rs));
             }
+        }catch(SQLException e) {
+            LOG.warn("Error - search failed for search term " + searchTerm, e);
         }
         return bookList;
     }
@@ -83,7 +86,8 @@ public class BookRepository {
                 return book;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to retrieve book with id: {}", bookId, e);
+            //e.printStackTrace();
         }
 
         return null;
@@ -112,12 +116,12 @@ public class BookRepository {
                         statement2.setInt(2, tag.getId());
                         statement2.executeUpdate();
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        LOG.error("Failed to insert book to tag: {}", tag, e);
                     }
                 });
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to create book: {}", book, e);
         }
         return id;
     }

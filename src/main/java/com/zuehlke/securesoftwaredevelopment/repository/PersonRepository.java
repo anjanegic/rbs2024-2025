@@ -33,7 +33,7 @@ public class PersonRepository {
                 personList.add(createPersonFromResultSet(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to retrieve all persons", e);
         }
         return personList;
     }
@@ -48,6 +48,9 @@ public class PersonRepository {
             while (rs.next()) {
                 personList.add(createPersonFromResultSet(rs));
             }
+        } catch (SQLException e) {
+            LOG.warn("Failed to search persons with term: {}", searchTerm, e);
+            throw e;
         }
         return personList;
     }
@@ -58,16 +61,18 @@ public class PersonRepository {
              Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery(query)) {
             while (rs.next()) {
-                return createPersonFromResultSet(rs);
+                Person person = createPersonFromResultSet(rs);
+                return person;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to retrieve person with id: {}", personId, e);
         }
 
         return null;
     }
 
     public void delete(int personId) {
+        LOG.warn("Deleting person with id: {}", personId);
         String query = "DELETE FROM persons WHERE id = " + personId;
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
@@ -75,7 +80,7 @@ public class PersonRepository {
             statement.executeUpdate(query);
             auditLogger.audit("Deleted person with ID: " + personId);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to delete person with id: {}", personId, e);
         }
     }
 
@@ -89,15 +94,23 @@ public class PersonRepository {
 
     public void update(Person personUpdate) {
         Person personFromDb = get(personUpdate.getId());
-        String query = "UPDATE persons SET firstName = ?, lastName = '" + personUpdate.getLastName() + "', email = ? where id = " + personUpdate.getId();
+        if (personFromDb == null) {
+            LOG.warn("Person not found for update: id={}", personUpdate.getId());
+            return;
+        }
+
+        String query = "UPDATE persons SET firstName = ?, lastName = ?, email = ? where id = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query);
         ) {
             String firstName = personUpdate.getFirstName() != null ? personUpdate.getFirstName() : personFromDb.getFirstName();
+            String lastName = personUpdate.getLastName() != null ? personUpdate.getLastName() : personFromDb.getLastName();
             String email = personUpdate.getEmail() != null ? personUpdate.getEmail() : personFromDb.getEmail();
             statement.setString(1, firstName);
-            statement.setString(2, email);
+            statement.setString(2, lastName);
+            statement.setString(3, email);
+            statement.setString(4, personFromDb.getId());
             statement.executeUpdate();
             auditLogger.auditChange(new Entity(
                     "persons.update",
@@ -106,7 +119,7 @@ public class PersonRepository {
                     firstName +" "+email));
             LOG.info("Person updated successfully");
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to update person with id: {}", personUpdate.getId(), e);
         }
     }
 }

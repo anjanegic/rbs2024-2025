@@ -6,6 +6,7 @@ import com.zuehlke.securesoftwaredevelopment.domain.Comment;
 import org.springframework.stereotype.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -40,8 +41,9 @@ public class CommentRepository {
                 comment.getComment()));
         LOG.info("Comment added successfully");
         } catch (SQLException e) {
-            e.printStackTrace();
-            LOG.error("Error adding comment", e);
+
+            LOG.warn("Failed to create comment for bookId={}, userId={}, comment={}",
+                     comment.getBookId(), comment.getUserId(), comment.getComment(), e);
         }
     }
 
@@ -57,7 +59,7 @@ public class CommentRepository {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to retrieve comments for bookId={}", bookId, e);
         }
         return commentList;
     }

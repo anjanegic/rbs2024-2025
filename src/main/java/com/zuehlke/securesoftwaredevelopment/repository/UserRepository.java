@@ -31,7 +31,7 @@ public class UserRepository {
                 return new User(id, username1, password);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to find user with username: {}", username, e);
         }
         return null;
     }
@@ -46,7 +46,8 @@ public class UserRepository {
                 return username;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to find username for id: {}", id, e); 
+            //e.printStackTrace();
         }
         return null;
     }
@@ -60,7 +61,8 @@ public class UserRepository {
             statement.setString(1, username);
             statement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to update username: {}", username, e);
+            //e.printStackTrace();
         }
     }
 
@@ -71,19 +73,25 @@ public class UserRepository {
              ResultSet rs = statement.executeQuery(query)) {
             return rs.next();
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.warn("Failed to validate credentials for username: {}", username, e);
         }
         return false;
     }
 
     public void delete(int userId) {
+        LOG.warn("Deleting user with id: {}", userId);
         String query = "DELETE FROM users WHERE id = " + userId;
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
         ) {
-            statement.executeUpdate(query);
+            int rowsAffected = statement.executeUpdate(query);
+            if (rowsAffected > 0) {
+                LOG.warn("User deleted successfully: id={}", userId);
+            } else {
+                LOG.warn("No user found to delete with id: {}", userId);
+            }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to delete user with id: {}", userId, e);
         }
     }
 }

@@ -48,7 +48,8 @@ public class RatingRepository {
                 preparedStatement.executeUpdate();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to create or update rating: {}", rating, e);
+            //e.printStackTrace();
         }
     }
 
@@ -64,7 +65,8 @@ public class RatingRepository {
                 ratingList.add(rating);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Failed to retrieve all ratings for book with id: {}", bookId, e);
+            //e.printStackTrace();
         }
         return ratingList;
     }
